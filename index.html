@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="AquaAI single-zone smart irrigation prototype dashboard" />
+    <title>AquaAI | Smart Irrigation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="AquaAI home">
+          <span class="brand-mark" aria-hidden="true">◒</span>
+          <span>Aqua<span>AI</span></span>
+        </a>
+        <div class="connection" id="connection-status" aria-live="polite">
+          <i></i><span>Checking API…</span>
+        </div>
+      </header>
+
+      <section class="hero" id="top">
+        <div>
+          <p class="eyebrow">ONE-ZONE IRRIGATION PROTOTYPE</p>
+          <h1>Water with <em>context,</em><br />not guesswork.</h1>
+          <p class="hero-copy">A live decision view for the AquaAI ESP32 prototype. It combines calibrated soil data and weather conditions into a simple, explainable water recommendation.</p>
+        </div>
+        <div class="hero-actions">
+          <button class="button button-primary" id="refresh-button" type="button">↻ Refresh dashboard</button>
+          <a class="docs-link" id="api-docs-link" href="#" target="_blank" rel="noreferrer">View API docs <span>↗</span></a>
+        </div>
+      </section>
+
+      <section class="decision-panel" aria-labelledby="decision-title">
+        <div class="decision-heading">
+          <p class="eyebrow">LATEST IRRIGATION DECISION</p>
+          <h2 id="decision-title">Awaiting sensor reading</h2>
+          <p id="decision-reason">Connect the dashboard to the Render API, then refresh or submit a reading.</p>
+        </div>
+        <div class="water-callout">
+          <span>Recommended water</span>
+          <strong id="recommended-water">—</strong>
+          <small>L / plant / day</small>
+        </div>
+        <div class="pump-state" id="pump-state">
+          <span class="pump-icon">◉</span>
+          <div><small>PUMP STATUS</small><strong>—</strong></div>
+        </div>
+      </section>
+
+      <section class="metric-grid" aria-label="Latest sensor metrics">
+        <article class="metric-card moisture"><span class="metric-symbol">◒</span><div><small>SOIL MOISTURE</small><strong id="metric-moisture">—</strong><p>calibrated value</p></div></article>
+        <article class="metric-card temperature"><span class="metric-symbol">⌁</span><div><small>TEMPERATURE</small><strong id="metric-temperature">—</strong><p>ambient air</p></div></article>
+        <article class="metric-card humidity"><span class="metric-symbol">◌</span><div><small>HUMIDITY</small><strong id="metric-humidity">—</strong><p>relative humidity</p></div></article>
+        <article class="metric-card rain"><span class="metric-symbol">☂</span><div><small>RAIN SIGNAL</small><strong id="metric-rain">—</strong><p>rain-aware rule</p></div></article>
+        <article class="metric-card water"><span class="metric-symbol">∿</span><div><small>PREVIOUS WATER</small><strong id="metric-previous-water">—</strong><p>applied today</p></div></article>
+      </section>
+
+      <section class="content-grid">
+        <section class="card sensor-form-card" aria-labelledby="form-heading">
+          <div class="section-heading">
+            <div><p class="eyebrow">SIMULATE / SUBMIT</p><h2 id="form-heading">New sensor reading</h2></div>
+            <span class="tag">ESP32-ready</span>
+          </div>
+          <p class="form-help">For a real device, POST the same fields to <code>/api/sensor-data</code>. Moisture must be a calibrated percentage, not a raw ADC value.</p>
+          <form id="sensor-form">
+            <div class="form-grid">
+              <label>Moisture (%)<input name="moisture" type="number" min="0" max="100" step="0.1" value="38" required /></label>
+              <label>Temperature (°C)<input name="temperature" type="number" min="-10" max="60" step="0.1" value="30" required /></label>
+              <label>Humidity (%)<input name="humidity" type="number" min="0" max="100" step="0.1" value="58" required /></label>
+              <label>Previous water (L)<input name="previous_water" type="number" min="0" max="5" step="0.01" value="0.3" required /></label>
+              <label>Crop<select name="crop"><option>Tomato</option><option>Chili</option></select></label>
+              <label>Growth stage<select name="growth_stage"><option value="seedling">Seedling</option><option value="vegetative" selected>Vegetative</option><option value="flowering">Flowering</option><option value="fruiting">Fruiting</option></select></label>
+            </div>
+            <label class="rain-toggle"><input name="rain" type="checkbox" /><span class="toggle-track"><span></span></span><span><strong>Rain detected / expected</strong><small>Postpones irrigation for this prototype.</small></span></label>
+            <button class="button button-primary submit-button" type="submit">Get recommendation <span>→</span></button>
+            <p class="form-message" id="form-message" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <aside class="card system-card" aria-labelledby="system-heading">
+          <div class="section-heading"><div><p class="eyebrow">SYSTEM VIEW</p><h2 id="system-heading">Decision path</h2></div></div>
+          <ol class="decision-path">
+            <li><span>01</span><div><strong>Sense</strong><p>ESP32 reads calibrated moisture and optional climate inputs.</p></div></li>
+            <li><span>02</span><div><strong>Evaluate</strong><p>FastAPI applies the synthetic Random Forest model and rain rule.</p></div></li>
+            <li><span>03</span><div><strong>Act safely</strong><p>ESP32 applies final thresholds and a run-time limit before relay control.</p></div></li>
+          </ol>
+          <div class="notice"><strong>Prototype note</strong><p>Recommendations use synthetic training data. Calibrate with measured moisture and flow data before field claims.</p></div>
+        </aside>
+      </section>
+
+      <section class="card readings-card" aria-labelledby="readings-heading">
+        <div class="section-heading"><div><p class="eyebrow">IN-MEMORY HISTORY</p><h2 id="readings-heading">Recent readings</h2></div><span id="last-updated">Not updated yet</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Time (local)</th><th>Crop / stage</th><th>Moisture</th><th>Climate</th><th>Rain</th><th>Previous</th><th>Recommendation</th><th>Pump</th></tr></thead>
+            <tbody id="readings-body"><tr><td colspan="8" class="empty-state">No API readings loaded yet.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer><span>AquaAI SIH prototype · Single zone · Tomato / Chili</span><span>Model is synthetic and explanatory—not field-validated.</span></footer>
+    </main>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
